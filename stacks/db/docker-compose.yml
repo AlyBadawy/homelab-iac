@@ -1,0 +1,101 @@
+services:
+  postgres:
+    container_name: db-postgres
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+    restart: unless-stopped
+    environment:
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    env_file:
+      - /mnt/nas/homelab/secrets/postgres.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - databases
+    # ports:
+    #   - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    shm_size: 256mb
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  pgadmin:
+    container_name: db-pgadmin
+    image: dpage/pgadmin4
+    restart: unless-stopped
+    env_file:
+      - /mnt/nas/homelab/secrets/pgadmin.env
+    networks:
+      - databases
+      - proxy
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    container_name: db-redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: >
+      redis-server
+      --save 60 1
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis_data:/data
+    # ports:
+    #   - "6379:6379"
+    networks:
+      - databases
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres_data:
+    driver: local
+    name: db_postgres_data
+    labels:
+      stack: "db"
+      service: "postgres"
+      backup: "true"
+      backup.name: "db_postgres_data"
+  pgadmin_data:
+    driver: local
+    name: db_pgadmin_data
+    labels:
+      stack: "db"
+      service: "pgadmin"
+      backup: "true"
+      backup.name: "db_pgadmin_data"
+  redis_data:
+    driver: local
+    name: db_redis_data
+    labels:
+      stack: "db"
+      service: "redis"
+      backup: "true"
+      backup.name: "db_redis_data"
+
+networks:
+  databases:
+    external: true
+  proxy:
+    external: true
