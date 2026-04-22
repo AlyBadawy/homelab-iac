@@ -1,0 +1,29 @@
+services:
+  nextcloud:
+    container_name: cloud-nextcloud
+    image: lscr.io/linuxserver/nextcloud:latest
+    restart: unless-stopped
+    environment:
+      - TZ=America/New_York
+    volumes:
+      - nextcloud_config:/config
+      - /mnt/nas/homelab/nextcloud/data:/data
+    networks:
+      - databases
+      - proxy
+
+volumes:
+  nextcloud_config:
+    driver: local
+    name: cloud_nextcloud_config
+    labels:
+      stack: "cloud"
+      service: "nextcloud"
+      backup: "true"
+      backup.name: "nextcloud_config"
+
+networks:
+  databases:
+    name: databases
+  proxy:
+    name: proxy
