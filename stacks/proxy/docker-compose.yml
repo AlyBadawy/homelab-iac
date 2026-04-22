@@ -1,0 +1,30 @@
+services:
+  npm:
+    container_name: proxy-npm
+    image: jc21/nginx-proxy-manager:latest
+    restart: unless-stopped
+    environment:
+      DB_SQLITE_FILE: /data/database.sqlite
+    networks:
+      - proxy
+    ports:
+      - "80:80"
+      - "443:443"
+      # - "81:81"
+    volumes:
+      - npm_data:/data
+      - /mnt/nas/homelab/certs:/certs:ro
+
+volumes:
+  npm_data:
+    driver: local
+    name: proxy_npm_data
+    labels:
+      stack: "proxy"
+      service: "npm"
+      backup: "true"
+      backup.name: "proxy_npm_data"
+
+networks:
+  proxy:
+    name: proxy
