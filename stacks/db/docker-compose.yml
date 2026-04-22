@@ -96,6 +96,6 @@ volumes:
 
 networks:
   databases:
-    external: true
+    name: databases
   proxy:
-    external: true
+    name: proxy

@@ -1,0 +1,36 @@
+services:
+  dockge:
+    container_name: platform-dockge
+    image: louislam/dockge:1
+    restart: unless-stopped
+    environment:
+      DOCKGE_STACKS_DIR: "/opt/stacks"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/stacks:/opt/stacks
+      - dockge_data:/app/data
+    networks:
+      - proxy
+    # ports:
+    #   - "5001:5001"
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  dockge_data:
+    driver: local
+    name: platform_dockge_data
+    labels:
+      stack: "platform"
+      service: "dockge"
+      backup: "true"
+      backup.name: "platform_dockge_data"
+
+networks:
+  proxy:
+    name: proxy
