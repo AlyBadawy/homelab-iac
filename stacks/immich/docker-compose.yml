@@ -1,0 +1,66 @@
+services:
+  immich-server:
+    container_name: immich-server
+    image: ghcr.io/immich-app/immich-server:release
+    restart: unless-stopped
+    volumes:
+      - /mnt/nas/homelab/immich:/data
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - /mnt/nas/homelab/secrets/immich.env
+    networks:
+      - databases
+      - proxy
+      - immich
+    # ports:
+    #   - '2283:2283'
+    group_add:
+      - video
+      - render
+    devices:
+      - /dev/dri:/dev/dri
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  immich-machine-learning:
+    container_name: immich-machine-learning
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    restart: unless-stopped
+    volumes:
+      - immich_model_cache:/cache
+    mem_limit: 4g
+    environment:
+      - IMMICH_MACHINE_LEARNING_WORKERS=1
+    networks:
+      - immich
+    group_add:
+      - video
+      - render
+    devices:
+      - /dev/dri:/dev/dri
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  immich_model_cache:
+    driver: local
+    name: immich_model_cache
+    labels:
+      stack: "immich"
+      service: "immich"
+      backup: "true"
+      backup.name: "immich_model_cache"
+
+networks:
+  databases:
+    name: databases
+  proxy:
+    name: proxy
+  immich:
+    name: immich

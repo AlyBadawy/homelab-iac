@@ -1,0 +1,56 @@
+services:
+  authentik-server:
+    container_name: authentication-authentik-server
+    image: ghcr.io/goauthentik/server:2026.2.2
+    restart: unless-stopped
+    command: server
+    env_file:
+      - /mnt/nas/homelab/secrets/authentik.env
+    volumes:
+      - authentik_data:/data
+      - authentik_templates:/templates
+    # ports:
+    #   - "7080:9000"
+    #   - "7443:9443"
+    networks:
+      - databases
+      - proxy
+
+  authentik-worker:
+    container_name: authentication-authentik-worker
+    image: ghcr.io/goauthentik/server:2026.2.2
+    restart: unless-stopped
+    command: worker
+    user: root
+    env_file:
+      - /mnt/nas/homelab/secrets/authentik.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - authentik_data:/data
+      - authentik_templates:/templates
+    networks:
+      - databases
+
+volumes:
+  authentik_data:
+    driver: local
+    name: authentication_authentik_data
+    labels:
+      stack: "authentication"
+      service: "authentik"
+      backup: "true"
+      backup.name: "authentication_authentik_data"
+  authentik_templates:
+    driver: local
+    name: authentication_authentik_templates
+    labels:
+      stack: "authentication"
+      service: "authentik"
+      backup: "true"
+      backup.name: "authentication_authentik_templates"
+
+networks:
+  databases:
+    name: databases
+  proxy:
+    name: proxy
